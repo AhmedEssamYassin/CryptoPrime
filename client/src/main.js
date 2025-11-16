@@ -73,10 +73,8 @@ class CryptoPrime {
 
         // Input validation listeners
         DOM.inputs.digitLength.addEventListener('input', validateDigitLength);
-        DOM.inputs.digitLength.addEventListener('blur', validateDigitLength);
 
         DOM.inputs.primeCount.addEventListener('input', validatePrimeCount);
-        DOM.inputs.primeCount.addEventListener('blur', validatePrimeCount);
 
         // Form submission listeners
         DOM.ui.generateButton.addEventListener('click', (event) => {
