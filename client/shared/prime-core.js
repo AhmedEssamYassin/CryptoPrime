@@ -1,5 +1,4 @@
 // prime-core.js - Works in BOTH browser and Node.js
-// Use: import in browser, require in Node.js
 // To make symbolic link: New-Item -ItemType Junction -Path "shared" -Target "..\client\shared"
 
 class PrimeCore {

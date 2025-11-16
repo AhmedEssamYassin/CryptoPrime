@@ -1,4 +1,3 @@
-// prime-server-api.js - Client-side API for server generation
 export class PrimeServerAPI {
     constructor(serverUrl = '/api/primes') {
         this.serverUrl = serverUrl;

@@ -1,4 +1,3 @@
-// server.js - Node.js backend for prime generation
 const express = require('express');
 const cors = require('cors');
 
