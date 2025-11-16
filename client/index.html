@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoPrime Generator</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <!-- Animated background -->
+    <div class="bg-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header with logo -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h1>CryptoPrime</h1>
+            </div>
+            <p class="subtitle">Secure Prime Number Generation</p>
+        </header>
+
+        <!-- Main form panel -->
+        <div class="crypto-panel">
+            <form id="prime-form">
+                <div class="form-group">
+                    <label for="digit-length">Prime Length (Digits)</label>
+                    <div class="input-container">
+                        <input type="number" id="digit-length" name="digitLength" min="1" max="1000"
+                            placeholder="Enter number of digits (e.g., 10)" required>
+                    </div>
+                    <div class="error" id="digit-length-error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prime-count">Number of Primes</label>
+                    <div class="input-container">
+                        <input type="number" id="prime-count" name="primeCount" min="1" max="100"
+                            placeholder="Enter number of primes to generate (e.g., 5)" required>
+                    </div>
+                    <div class="error" id="prime-count-error"></div>
+                </div>
+
+                <button type="submit" class="generate-btn" id="generate-btn">
+                    Generate Primes
+                </button>
+            </form>
+
+            <!-- Error message -->
+            <div class="error" id="error-message"></div>
+        </div>
+
+        <!-- Loading animation -->
+        <div class="loading" id="loading">
+            <div class="loading-text">Generating cryptographically secure primes...</div>
+            <div class="loading-bar"></div>
+        </div>
+
+        <!-- Time display -->
+        <div class="time-display" id="time-display" style="display: none;"></div>
+
+        <!-- Results section -->
+        <div class="results">
+            <div class="results-header" id="results-header" style="display: none;">
+                <span>Generated Prime Numbers</span>
+                <button class="export-btn" id="export-btn" style="display: none;">
+                    <span class="export-icon">⬇</span> Export TXT
+                </button>
+            </div>
+            <div class="prime-output" id="prime-output"></div>
+
+            <!-- Pagination controls -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="pagination-btn" id="prev-page">◀ Previous</button>
+                <span class="page-info" id="page-info">Page 1 of 1</span>
+                <button class="pagination-btn" id="next-page">Next ▶</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>
