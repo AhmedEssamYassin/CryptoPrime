@@ -40,47 +40,6 @@ Built with a "Matrix-style" cyber-aesthetic, it ensures UI responsiveness while 
 **Utilities:**
 - Concurrently (Running client/server simultaneously)
 
-## 📂 Project Structure
-
-The project utilizes a monorepo-like structure where core mathematical logic is shared between the client and server to ensure consistency.
-```
-cryptoprime/
-├── .vscode/
-│   └── settings.json           # VS Code workspace settings
-├── client/                     # Frontend Application (Vite)
-│   ├── css/
-│   │   └── styles.css          # Global styles and animations
-│   ├── images/
-│   │   └── favicon.ico
-│   ├── shared/                 # Symlinked/Copied logic from server
-│   │   ├── crypto-providers.js # Platform-specific crypto wrappers
-│   │   ├── prime-core.js       # Core Miller-Rabin & Math logic
-│   │   └── yield-strategies.js # Strategies for event-loop yielding
-│   ├── src/
-│   │   ├── main.js             # Entry point & DOM manipulation
-│   │   ├── pagination-controller.js # Handles result pagination
-│   │   ├── prime-client.js     # Orchestrator (decides Worker vs Server)
-│   │   ├── prime-generator.js  # Client-side generator logic
-│   │   ├── prime-server-api.js # API wrapper for server communication
-│   │   └── prime-worker.js     # Web Worker entry point
-│   ├── index.html              # Main HTML template
-│   ├── package.json            # Client dependencies
-│   └── vite.config.mjs         # Vite configuration (Proxy setup)
-├── server/                     # Backend Application (Express)
-│   ├── shared/                 # Source of Truth for Shared Logic
-│   │   ├── crypto-providers.js
-│   │   ├── prime-core.js
-│   │   └── yield-strategies.js
-│   ├── package.json            # Server dependencies
-│   ├── prime-generator-server.js # Server-side generator wrapper
-│   └── server.js               # Express server entry point
-├── .gitattributes
-├── .gitignore
-├── LICENSE
-├── package.json                # Root scripts (concurrently setup)
-└── README.md
-```
-
 ## ⚡ Getting Started
 
 ### Prerequisites
