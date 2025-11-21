@@ -5,7 +5,7 @@ const PrimeGeneratorServer = require('./prime-generator-server');
 
 const app = express();
 // Middleware
-app.use(cors()); // Allows requests from your frontend
+app.use(cors()); // Allows requests from frontend
 app.use(express.json()); // Parses incoming JSON request bodies
 
 const PORT = 3000;
