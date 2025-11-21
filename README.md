@@ -4,6 +4,9 @@ CryptoPrime is a hybrid web application designed to generate cryptographically s
 
 Built with a "Matrix-style" cyber-aesthetic, it ensures UI responsiveness while performing heavy mathematical operations.
 
+## System Design (UML Diagram)
+![UML Diagram](./docs/system%20design%20UML.svg)
+
 ## 🚀 Key Features
 
 - **Cryptographically Secure**: Uses `crypto.getRandomValues()` (Browser) and Node.js crypto module for secure random number generation.
