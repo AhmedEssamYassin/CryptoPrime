@@ -1,11 +1,9 @@
-// uses the shared core
-import { PrimeCore } from '../shared/prime-core.js';
-import { BrowserCryptoProvider } from '../shared/crypto-providers.js';
-import { WorkerYieldStrategy } from '../shared/yield-strategies.js';
+import { PrimeCore } from '@cryptoprime/core/prime-core.js';
+import { BrowserCryptoProvider } from '@cryptoprime/core/crypto-providers.js';
+import { WorkerYieldStrategy } from '@cryptoprime/core/yield-strategies.js';
 
 class PrimeGeneratorWorker {
     constructor() {
-        // Initialize core with browser crypto
         this.core = new PrimeCore(new BrowserCryptoProvider());
         this.yieldStrategy = new WorkerYieldStrategy();
     }

@@ -1,7 +1,6 @@
-// uses the shared core
-import { PrimeCore } from '../shared/prime-core.js';
-import { BrowserCryptoProvider } from '../shared/crypto-providers.js';
-import { BrowserYieldStrategy } from '../shared/yield-strategies.js';
+import { PrimeCore } from '@cryptoprime/core/prime-core.js';
+import { BrowserCryptoProvider } from '@cryptoprime/core/crypto-providers.js';
+import { BrowserYieldStrategy } from '@cryptoprime/core/yield-strategies.js';
 
 export class PrimeGenerator {
     constructor(useWorker = true) {
@@ -9,7 +8,6 @@ export class PrimeGenerator {
         this.worker = null;
         this.workerBusy = false;
 
-        // Initialize core with browser crypto
         this.core = new PrimeCore(new BrowserCryptoProvider());
         this.yieldStrategy = new BrowserYieldStrategy();
     }
@@ -33,28 +31,11 @@ export class PrimeGenerator {
         }
     }
 
-    // Expose core methods for direct access if needed
-    randomBigIntInRange(min, max) {
-        return this.core.randomBigIntInRange(min, max);
-    }
-
-    generateRandomOddNumber(digitLength) {
-        return this.core.generateRandomOddNumber(digitLength);
-    }
-
-    mult64(a, b, mod) {
-        return this.core.mult64(a, b, mod);
-    }
-
-    modPow(N, power, mod) {
-        return this.core.modPow(N, power, mod);
-    }
-
+    // Public API pass-through — useful for direct primality checks in tests
     isPrime(N) {
         return this.core.isPrime(N);
     }
 
-    // Function to generate primes with progressive callback
     async generatePrimesProgressive(digitLength, count, onPrimeFound) {
         // Use worker if available and not busy
         if (this.useWorker && !this.workerBusy) {
@@ -76,7 +57,6 @@ export class PrimeGenerator {
                 const { type, prime, error } = e.data;
 
                 if (type === 'prime') {
-                    // Call callback with found prime
                     if (onPrimeFound) {
                         onPrimeFound(BigInt(prime));
                     }
@@ -93,7 +73,6 @@ export class PrimeGenerator {
 
             this.worker.addEventListener('message', messageHandler);
 
-            // Send generation request to worker
             this.worker.postMessage({
                 type: 'generate',
                 digitLength,
