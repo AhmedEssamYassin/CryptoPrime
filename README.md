@@ -1,114 +1,116 @@
 # CryptoPrime
 
-CryptoPrime is a hybrid web application designed to generate cryptographically secure large prime numbers. It features an intelligent architecture that dynamically delegates computational tasks between the browser (using Main Thread or Web Workers) and a Node.js server based on the complexity of the request.
+A web application for generating cryptographically secure large prime numbers. It runs in the browser and optionally offloads heavy work to a Node.js backend, picking the best execution path automatically based on how expensive the job looks.
 
-Built with a "Matrix-style" cyber-aesthetic, it ensures UI responsiveness while performing heavy mathematical operations.
+The UI has a dark "matrix" theme with particle animations, live results streaming, pagination, click-to-copy, and text file export.
 
 ## Key Features
 
-- **Cryptographically Secure**: Uses `crypto.getRandomValues()` (Browser) and Node.js crypto module for secure random number generation.
+- **BPSW Primality Test**: Uses the Baillie-PSW test — a base-2 Miller-Rabin followed by a Strong Lucas-Selfridge test. No known BPSW pseudoprime has ever been found. For primes larger than 2^64, five extra random-base Miller-Rabin rounds are added to satisfy FIPS 186-4 guidelines.
 
-- **Miller-Rabin Primality Test**: Implements robust probabilistic primality testing for high accuracy.
+- **Montgomery Reduction**: All hot-path modular arithmetic replaces expensive BigInt division with bitwise shifts and multiplications. A single Montgomery context is built per candidate and shared across every sub-call (Miller-Rabin squarings, Lucas sequence steps), so the precomputation only happens once.
+
+- **Cryptographically Secure**: Uses `crypto.getRandomValues()` (browser) and `crypto.randomBytes()` (Node.js) for random number generation.
 
 - **Hybrid Architecture**: Automatically selects the best execution environment:
-  - **Main Thread**: For small, instant calculations.
-  - **Web Workers**: For medium loads (prevents UI freezing).
-  - **Server-Side**: For heavy computational loads (delegated to Node.js backend).
+  - **Web Worker**: Default for most jobs — runs in a dedicated browser thread, UI never freezes.
+  - **Server**: For heavy jobs — the Express backend spawns a `worker_threads` Worker and streams results back as newline-delimited JSON.
+  - **Main Thread**: Fallback if Workers are unavailable — yields periodically to keep the UI responsive.
 
-- **Progressive Loading**: Streams results in real-time using chunked transfer encoding.
+- **Progressive Loading**: Streams results in real-time using chunked transfer encoding (NDJSON).
 
-- **Responsive UI**: Cyber-themed interface with particle animations, pagination, and "click-to-copy" functionality.
+- **Responsive UI**: Cyber-themed interface with particle animations, pagination, and click-to-copy.
 
-- **Export Data**: Ability to export generated primes to `.txt` files.
+- **Export**: Generated primes can be downloaded as `.txt` files.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 **Frontend:**
 - Vanilla JavaScript (ES Modules)
-- Vite (Build tool & Dev Server)
-- Web Workers (Multi-threading)
-- CSS3 (Custom animations & responsiveness)
+- Vite (build tool and dev server)
+- Web Workers (multi-threading)
+- CSS3 (custom animations and responsiveness)
 
 **Backend:**
 - Node.js
 - Express.js
-- Shared Logic (Core math logic shared between client/server)
+- `worker_threads` (offloads math from the event loop)
 
-**Utilities:**
-- Concurrently (Running client/server simultaneously)
+**Shared:**
+- `@cryptoprime/core` — isomorphic math library, pure BigInt, zero dependencies
 
-## System Design (UML Diagram)
+**Tooling:**
+- npm workspaces (monorepo)
+- Concurrently (runs client and server simultaneously)
+
+## System Design
+
 ![UML Diagram](./docs/system%20design%20UML.svg)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18+ recommended)
+- Node.js v18+
 - npm
 
 ### Installation
 
-1. **Clone the repository:**
 ```bash
 git clone https://github.com/AhmedEssamYassin/CryptoPrime.git
 cd CryptoPrime
+npm install      # installs all three workspaces at once
 ```
 
-2. **Install Dependencies:**
-
-You need to install dependencies for the root, the client, and the server.
-```bash
-# Install root dependencies
-npm install
-
-# Install Client dependencies
-cd client
-npm install
-
-# Install Server dependencies
-cd ../server
-npm install
-```
-
-3. **Link Shared Logic:**
-
-The client relies on the logic inside `server/shared`.
-
-**Note:** Ensure the `client/shared` folder contains the files from `server/shared`. If they are missing, copy them manually or create a symbolic link.
+The project is an npm workspaces monorepo (`packages/core`, `packages/client`, `packages/server`). A single `npm install` at the root handles everything — no symlinks or manual copying needed.
 
 ### Running the Application
 
-To run both the frontend (Vite) and backend (Express) simultaneously, run the following command from the root directory:
+To run both the frontend (Vite) and backend (Express) simultaneously:
+
 ```bash
 npm run dev
 ```
 
-- **Frontend**: Accessible at `http://localhost:5173` (or the port assigned by Vite)
-- **Backend**: Running at `http://localhost:3000`
+- **Frontend**: `http://localhost:5173` (or the port assigned by Vite)
+- **Backend**: `http://localhost:3000`
 
-## 🧠 How It Works
+The Vite dev server proxies `/api/*` requests to the backend, so everything works on a single origin during development.
+
+### Other Commands
+
+```bash
+npm run build    # production build of the client
+npm run preview  # serve the production build locally
+npm start        # start just the server
+```
+
+## How It Works
 
 ### The Core Logic (PrimeCore)
 
-The mathematical core is isomorphic (runs in both Node and Browser). It generates random odd numbers based on the requested digit length and validates them using the Miller-Rabin primality test.
+The mathematical core is isomorphic — runs identically in Node.js and the browser. It generates random odd numbers of the requested digit length and validates them using the BPSW primality test (base-2 Miller-Rabin + Strong Lucas-Selfridge), with all modular exponentiation accelerated by Montgomery reduction.
+
+For a detailed walkthrough of every file, the Montgomery math, and how all the pieces communicate, see [docs/Workflow.md](./docs/Workflow.md).
 
 ### Yield Strategies
 
-To prevent the application from freezing during intensive loops, the system uses "Yield Strategies":
+When the math runs on a thread shared with other work, the search loop periodically yields control so the runtime can handle rendering, events, or I/O:
 
-- **Browser**: Yields to the event loop every 1000 attempts (using `setTimeout`).
-- **Server**: Yields every 5000 attempts (using `setImmediate`).
-- **Worker**: Does not yield (dedicated thread).
+- **Browser main thread**: yields every 1000 candidates via `setTimeout(0)`
+- **Server main thread**: yields every 5000 candidates via `setImmediate`
+- **Dedicated worker threads**: never yields — the thread is exclusively ours
 
 ### Adaptive Execution
 
-The `PrimeClient` determines where to execute the code based on complexity (`digitLength * count`):
+The `PrimeClient` estimates complexity as `digitLength³ × count` (approximating the O(k³) cost of modular exponentiation on k-bit numbers) and picks a mode:
 
-- **Low Complexity**: Runs on Main Thread.
-- **Medium Complexity**: Spawns a Web Worker.
-- **High Complexity**: Sends a request to the Express Server.
+- **Low/Medium Complexity**: Spawns a Web Worker.
+- **High Complexity** (`> 1,000,000`): Sends a request to the Express server.
+- **Fallback**: Main thread (only if Workers are unavailable).
 
-## 📝 License
+Each mode falls back to the next one down if it fails.
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+## License
+
+This project is licensed under the MIT License — see [LICENSE](./LICENSE).
