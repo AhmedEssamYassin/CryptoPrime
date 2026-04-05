@@ -1,5 +1,3 @@
-// yield-strategies.js - Works in BOTH browser and Node.js
-
 // Browser main thread - yield frequently for UI responsiveness
 class BrowserYieldStrategy {
     shouldYield(attempts) {
@@ -36,12 +34,6 @@ class WorkerYieldStrategy {
     async yield() {
         // No-op
     }
-}
-
-// Universal export
-if (typeof module !== 'undefined' && module.exports) {
-    // Node.js (CommonJS)
-    module.exports = { BrowserYieldStrategy, ServerYieldStrategy, WorkerYieldStrategy };
 }
 
 export { BrowserYieldStrategy, ServerYieldStrategy, WorkerYieldStrategy };

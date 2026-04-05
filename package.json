@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm start --prefix server\"",
-    "build": "npm run build --prefix client",
-    "preview": "npm run preview --prefix client",
-    "start": "npm start --prefix server"
+    "dev": "concurrently \"npm run dev -w client\" \"npm start -w server\"",
+    "build": "npm run build -w client",
+    "preview": "npm run preview -w client",
+    "start": "npm start -w server"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "concurrently": "^9.2.1"
   }

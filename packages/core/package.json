@@ -1,0 +1,12 @@
+{
+  "name": "@cryptoprime/core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./prime-core.js",
+  "exports": {
+    ".": "./prime-core.js",
+    "./prime-core.js": "./prime-core.js",
+    "./crypto-providers.js": "./crypto-providers.js",
+    "./yield-strategies.js": "./yield-strategies.js"
+  }
+}

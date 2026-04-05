@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 
-const PrimeGeneratorServer = require('./prime-generator-server');
+import PrimeGeneratorServer from './prime-generator-server.js';
 
 const app = express();
 // Middleware
@@ -15,11 +15,11 @@ const generator = new PrimeGeneratorServer();
 app.post('/api/primes', async (req, res) => {
     const { digitLength, count } = req.body;
 
-    // Validate input
-    if (!digitLength || !count || digitLength < 1 || count < 1) {
+    // Validate input with strict max constraints to prevent DoS
+    if (!digitLength || !count || digitLength < 1 || count < 1 || digitLength > 500 || count > 100) {
         return res.status(400).json({
             type: 'error',
-            error: 'Invalid digitLength or count'
+            error: 'Invalid digitLength or count. digitLength must be 1-500, count must be 1-100.'
         });
     }
 

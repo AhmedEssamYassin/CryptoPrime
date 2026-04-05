@@ -15,5 +15,8 @@
   "type": "module",
   "devDependencies": {
     "vite": "^7.1.12"
+  },
+  "dependencies": {
+    "@cryptoprime/core": "*"
   }
 }

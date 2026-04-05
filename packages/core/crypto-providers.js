@@ -1,5 +1,3 @@
-// crypto-providers.js - Works in BOTH browser and Node.js
-
 // Browser crypto provider
 class BrowserCryptoProvider {
     getRandomBytes(bytes) {
@@ -26,12 +24,6 @@ class NodeCryptoProvider {
     bufferToHex(buf) {
         return buf.toString('hex');
     }
-}
-
-// Universal export
-if (typeof module !== 'undefined' && module.exports) {
-    // Node.js (CommonJS)
-    module.exports = { BrowserCryptoProvider, NodeCryptoProvider };
 }
 
 export { BrowserCryptoProvider, NodeCryptoProvider };
