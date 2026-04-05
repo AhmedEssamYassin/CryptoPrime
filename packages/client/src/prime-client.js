@@ -38,19 +38,19 @@ export class PrimeClient {
         }
 
         // Auto-select based on complexity
-        const complexity = digitLength * count;
+        const complexity = (digitLength ** 3) * count;
 
         // For very large jobs, prefer server if available
-        if (complexity > 1000) {
+        if (complexity > 1000000) {
             return 'server';
         }
 
-        // For medium jobs, prefer worker
-        if (complexity > 200 && typeof Worker !== 'undefined') {
+        // For medium/small jobs, prefer worker unconditionally
+        if (typeof Worker !== 'undefined') {
             return 'worker';
         }
 
-        // For small jobs, main thread is fine
+        // Only fallback to main thread if Web Workers are completely unsupported
         return 'mainthread';
     }
 
@@ -88,5 +88,7 @@ export class PrimeClient {
 
     cleanup() {
         this.workerGenerator.terminateWorker();
+        this.serverAPI.abort();
     }
+
 }

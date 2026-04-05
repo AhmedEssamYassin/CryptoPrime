@@ -1,11 +1,6 @@
-// Global strict mode
-"use strict";
-
-// Imports
 import { PaginationController } from './pagination-controller.js';
 import { PrimeClient } from './prime-client.js';
 
-// DOM elements
 const DOM = {
     form: document.getElementById("prime-form"),
     inputs: {
@@ -49,10 +44,8 @@ class CryptoPrime {
 
         this.VALIDATION_DELAY = 300;
 
-        // Initialize pagination module
-        this.pagination = new PaginationController(5); // 5 items per page
-
-        // State management
+        this.pagination = new PaginationController(5);
+        this.primeClient = new PrimeClient({ mode: 'auto' });
         this.generationTime = 0;
 
         // Bind methods to preserve 'this' context
@@ -211,11 +204,9 @@ class CryptoPrime {
         // Update display with current page items
         this.displayPrimes(this.pagination.getCurrentPageItemsWithIndices());
 
-        // Update pagination UI
         this.updatePaginationUI(state);
     }
 
-    // Display primes on the page
     displayPrimes(itemsWithIndices) {
         // Clear previous results
         DOM.ui.output.innerHTML = "";
@@ -253,7 +244,6 @@ class CryptoPrime {
         DOM.ui.output.style.display = "block";
     }
 
-    // Update pagination UI elements
     updatePaginationUI(state) {
         if (!state.isPaginationNeeded) {
             DOM.ui.pagination.style.display = "none";
@@ -290,6 +280,8 @@ class CryptoPrime {
     }
 
     async handlePrimeGeneration() {
+        if (this.isGenerating) return;
+
         // Validate form
         const formValidation = this.validateForm();
 
@@ -297,8 +289,13 @@ class CryptoPrime {
             return; // Stop if validation fails
         }
 
+        this.isGenerating = true;
+        DOM.ui.generateButton.disabled = true;
+        DOM.ui.generateButton.classList.add("disabled");
+
         // Reset pagination and clear previous results
         this.pagination.reset();
+        this.primeClient.cleanup();
         DOM.ui.output.innerHTML = "";
         DOM.ui.output.style.display = "none";
         DOM.ui.resultsHeader.style.display = "none";
@@ -318,14 +315,10 @@ class CryptoPrime {
 
         // Generate primes asynchronously with progressive display
         try {
-            this.primeClient = new PrimeClient({ mode: 'auto' });
-
-            // Generate primes with callback for progressive updates
             await this.primeClient.generatePrimesProgressive(
                 digitLength,
                 primeCount,
                 (prime) => {
-                    // Add prime to pagination
                     this.pagination.addItem(prime);
 
                     // If we're on the first page, update display immediately
@@ -363,6 +356,10 @@ class CryptoPrime {
             DOM.ui.loading.style.display = "none";
             DOM.errors.form.innerText = "Error generating primes: " + error.message;
             DOM.errors.form.style.display = "block";
+        } finally {
+            this.isGenerating = false;
+            DOM.ui.generateButton.disabled = false;
+            DOM.ui.generateButton.classList.remove("disabled");
         }
     }
 }
