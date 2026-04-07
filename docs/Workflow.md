@@ -6,7 +6,7 @@ This document explains the complete end-to-end workflow of the CryptoPrime appli
 
 ## Table of Contents
 
-1. [Project Structure](#1-project-structure)
+1. [System Design](#1-system-design)
 2. [Monorepo Architecture](#2-monorepo-architecture)
 3. [Startup Sequence](#3-startup-sequence)
 4. [End-to-End Request Flow](#4-end-to-end-request-flow)
@@ -30,37 +30,9 @@ This document explains the complete end-to-end workflow of the CryptoPrime appli
 
 ---
 
-## 1. Project Structure
+## 1. System Design
 
-```
-CryptoPrime/
-├── package.json                          ← Root workspace manifest
-├── packages/
-│   ├── core/                             ← Isomorphic math library
-│   │   ├── package.json                  ← @cryptoprime/core
-│   │   ├── prime-core.js                 ← PrimeCore class (BPSW, Montgomery)
-│   │   ├── crypto-providers.js           ← BrowserCryptoProvider, NodeCryptoProvider
-│   │   └── yield-strategies.js           ← BrowserYieldStrategy, ServerYieldStrategy, WorkerYieldStrategy
-│   │
-│   ├── client/                           ← Browser frontend (Vite)
-│   │   ├── package.json
-│   │   ├── index.html                    ← Entry HTML
-│   │   ├── vite.config.mjs               ← Dev server + /api proxy
-│   │   ├── css/styles.css                ← Matrix-themed styling
-│   │   └── src/
-│   │       ├── main.js                   ← CryptoPrime UI controller
-│   │       ├── prime-client.js           ← PrimeClient (mode dispatcher)
-│   │       ├── prime-generator.js        ← PrimeGenerator (worker/main thread bridge)
-│   │       ├── prime-worker.js           ← Browser Web Worker entry point
-│   │       ├── prime-server-api.js       ← PrimeServerAPI (fetch + NDJSON streaming)
-│   │       └── pagination-controller.js  ← PaginationController
-│   │
-│   └── server/                           ← Node.js Express backend
-│       ├── package.json
-│       ├── server.js                      ← Express app + /api/primes route
-│       ├── prime-generator-server.js      ← PrimeGeneratorServer (spawns worker_threads)
-│       └── prime-worker.js                ← Node.js worker_threads entry point
-```
+![System Design UML](System%20design%20UML.svg)
 
 ---
 
@@ -157,7 +129,7 @@ Below is the complete call chain from button click to displayed prime number.
  │       │                                                             │
  │       ▼                                                             │
  │  On completion: stops timer, shows results, shows Export button     │
- └──────────────────────────────────────────────────────────────────────┘
+ └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -419,16 +391,16 @@ The yield strategy is a **Strategy Pattern** that decouples the math engine from
                     │  «interface»         │
                     │  YieldStrategy       │
                     ├──────────────────────┤
-                    │ shouldYield(attempts) │
+                    │ shouldYield(attempts)│
                     │ yield()              │
                     └──────────┬───────────┘
                                │
               ┌────────────────┼────────────────┐
               │                │                │
    ┌──────────▼──────┐ ┌──────▼────────┐ ┌─────▼──────────┐
-   │ BrowserYield     │ │ ServerYield    │ │ WorkerYield     │
-   │ every 1000 iters │ │ every 5000    │ │ never yields    │
-   │ setTimeout(0)    │ │ setImmediate  │ │ (no-op)         │
+   │ BrowserYield    │ │ ServerYield   │ │ WorkerYield    │
+   │ every 1000 iters│ │ every 5000    │ │ never yields   │
+   │ setTimeout(0)   │ │ setImmediate  │ │ (no-op)        │
    └─────────────────┘ └───────────────┘ └────────────────┘
 ```
 
@@ -456,13 +428,13 @@ Another Strategy Pattern to abstract platform-specific secure random number gene
                     │ bufferToHex(buf)     │
                     └──────────┬───────────┘
                                │
-              ┌────────────────┴────────────────┐
-              │                                 │
-   ┌──────────▼──────────┐          ┌───────────▼──────────┐
-   │ BrowserCryptoProvider│          │ NodeCryptoProvider    │
-   │ crypto.getRandomValues│         │ crypto.randomBytes()  │
-   │ manual hex conversion │         │ buf.toString('hex')   │
-   └─────────────────────┘          └──────────────────────┘
+              ┌────────────────┴──────────────────┐
+              │                                   │
+   ┌──────────▼────────────┐          ┌───────────▼──────────┐
+   │ BrowserCryptoProvider │          │ NodeCryptoProvider   │
+   │ crypto.getRandomValues│          │ crypto.randomBytes() │
+   │ manual hex conversion │          │ buf.toString('hex')  │
+   └───────────────────────┘          └──────────────────────┘
 ```
 
 **Browser:** Uses the Web Crypto API (`crypto.getRandomValues`) with manual byte-to-hex conversion.
@@ -671,19 +643,19 @@ Prime generation involves testing thousands of random candidates, each requiring
 The Web Workers API solves this by creating **true OS-level threads** that run JavaScript in parallel.
 
 ```
- ┌─────────────────────────────────┐    ┌─────────────────────────────────┐
- │         MAIN THREAD             │    │         WORKER THREAD           │
- │                                 │    │                                 │
- │  • DOM access ✓                 │    │  • DOM access ✗                 │
- │  • window object ✓              │    │  • self object ✓ (not window)   │
- │  • User event handling ✓        │    │  • crypto.getRandomValues ✓     │
- │  • UI rendering ✓               │    │  • importScripts/import ✓       │
- │  • Can create Workers ✓         │    │  • Can create sub-Workers ✓     │
- │                                 │    │                                 │
- │  postMessage({...}) ──────────────────► addEventListener('message')   │
- │  addEventListener('message') ◄────────── postMessage({...})           │
- │                                 │    │                                 │
- └─────────────────────────────────┘    └─────────────────────────────────┘
+ ┌────────────────────────────────┐    ┌────────────────────────────────┐
+ │         MAIN THREAD            │    │         WORKER THREAD          │
+ │                                │    │                                │
+ │  • DOM access                  │    │  • No DOM access               │
+ │  • window object               │    │  • self object (not window)    │
+ │  • User event handling         │    │  • crypto.getRandomValues      │
+ │  • UI rendering                │    │  • importScripts/import        │
+ │  • Can create Workers          │    │  • Can create sub-Workers      │
+ │                                │    │                                │
+ │  postMessage({...}) ──────────────────► addEventListener('message')  │
+ │  addEventListener('message') ◄────────── postMessage({...})          │
+ │                                │    │                                │
+ └────────────────────────────────┘    └────────────────────────────────┘
 ```
 
 **Key properties:**
@@ -753,21 +725,21 @@ async generatePrimesProgressiveWorker(digitLength, count, onPrimeFound) {
 Node.js has its own parallelism API: the `worker_threads` module. It serves the same purpose as browser Web Workers but with Node-specific features.
 
 ```
- ┌─────────────────────────────────────┐    ┌──────────────────────────────────┐
- │        EXPRESS MAIN THREAD          │    │       WORKER THREAD              │
- │                                     │    │                                  │
- │  • HTTP request handling ✓          │    │  • No HTTP handling              │
- │  • Middleware execution ✓           │    │  • Full Node.js API ✓            │
- │  • res.write() for streaming ✓      │    │  • crypto module ✓               │
- │  • Event loop for I/O ✓             │    │  • Own V8 isolate + event loop   │
- │                                     │    │                                  │
+ ┌─────────────────────────────────────┐    ┌───────────────────────────────────┐
+ │        EXPRESS MAIN THREAD          │    │       WORKER THREAD               │
+ │                                     │    │                                   │
+ │  • HTTP request handling            │    │  • No HTTP handling               │
+ │  • Middleware execution             │    │  • Full Node.js API               │
+ │  • res.write() for streaming        │    │  • crypto module                  │
+ │  • Event loop for I/O               │    │  • Own V8 isolate + event loop    │
+ │                                     │    │                                   │
  │  new Worker('prime-worker.js',      │    │  workerData = {digitLength, count}│
- │    { workerData: {...} })           │    │                                  │
- │                                     │    │                                  │
- │  worker.on('message') ◄───────────────── parentPort.postMessage({...})     │
- │  worker.on('error')                 │    │                                  │
- │  worker.on('exit')                  │    │  (thread exits when start() ends)│
- └─────────────────────────────────────┘    └──────────────────────────────────┘
+ │    { workerData: {...} })           │    │                                   │
+ │                                     │    │                                   │
+ │  worker.on('message') ◄───────────────── parentPort.postMessage({...})       │
+ │  worker.on('error')                 │    │                                   │
+ │  worker.on('exit')                  │    │  (thread exits when start() ends) │
+ └─────────────────────────────────────┘    └───────────────────────────────────┘
 ```
 
 **Key differences from browser Workers:**
@@ -853,30 +825,30 @@ This appendix explains why yielding exists, how the JavaScript event loop works 
 JavaScript runtimes (both V8 in browsers and Node.js) use a **cooperative multitasking** model. There is one thread, and it runs a loop:
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   EVENT LOOP                    │
-│                                                 │
-│  ┌───────────┐                                  │
+┌──────────────────────────────────────────────────┐
+│                   EVENT LOOP                     │
+│                                                  │
+│  ┌────────────┐                                  │
 │  │ Call Stack │ ◄── Currently executing code     │
-│  └─────┬─────┘                                  │
+│  └─────┬──────┘                                  │
 │        │ (empty? pick next task)                 │
-│        ▼                                        │
-│  ┌──────────────┐                               │
-│  │ Macrotask     │ setTimeout, setInterval,      │
-│  │ Queue         │ setImmediate, I/O callbacks   │
-│  └──────┬───────┘                               │
+│        ▼                                         │
+│  ┌──────────────┐                                │
+│  │ Macrotask    │ setTimeout, setInterval,       │
+│  │ Queue        │ setImmediate, I/O callbacks    │
+│  └──────┬───────┘                                │
 │         │ (between macrotasks)                   │
 │         ▼                                        │
-│  ┌──────────────┐                               │
-│  │ Microtask     │ Promise.then, queueMicrotask, │
-│  │ Queue         │ MutationObserver              │
-│  └──────┬───────┘                               │
+│  ┌──────────────┐                                │
+│  │ Microtask    │ Promise.then, queueMicrotask,  │
+│  │ Queue        │ MutationObserver               │
+│  └──────┬───────┘                                │
 │         │ (browser only, between tasks)          │
 │         ▼                                        │
-│  ┌──────────────┐                               │
-│  │ Render Steps  │ Style calc, layout, paint     │
-│  └──────────────┘                               │
-└─────────────────────────────────────────────────┘
+│  ┌──────────────┐                                │
+│  │ Render Steps │ Style calc, layout, paint      │
+│  └──────────────┘                                │
+└──────────────────────────────────────────────────┘
 ```
 
 **The critical insight:** JavaScript code runs **synchronously** until the call stack is empty. While your code is running, **nothing else happens** — no rendering, no event handling, no I/O callbacks. The event loop only picks up the next task when the current one finishes.
@@ -913,13 +885,13 @@ Yielding inserts **voluntary pause points** into the computation, allowing the e
   │ Time ──────────────────────────────────────────────► │
   │                                                      │
   │ WITHOUT YIELDING:                                    │
-  │ ██████████████████████████████████████████████████    │
+  │ ██████████████████████████████████████████████████   │
   │ ^--- isPrime loop (3 seconds, no breaks) ---^        │
   │                                                      │
   │ WITH YIELDING (every 1000 attempts):                 │
-  │ ████████░████████░████████░████████░██████████░       │
-  │         ^        ^        ^        ^                  │
-  │         │        │        │        │                  │
+  │ ████████░████████░████████░████████░██████████░      │
+  │         ^        ^        ^        ^                 │
+  │         │        │        │        │                 │
   │      render   events   render   events               │
   │      + paint            + paint                      │
   └──────────────────────────────────────────────────────┘
@@ -1100,7 +1072,7 @@ When `null` is passed (as in the server Worker), both yield checks short-circuit
 
 ```js
 if (yieldStrategy && yieldStrategy.shouldYield(attempts))  // null is falsy → skipped
-if (yieldStrategy) await yieldStrategy.yield();             // null is falsy → skipped
+if (yieldStrategy) await yieldStrategy.yield();            // null is falsy → skipped
 ```
 
 The entire loop runs **synchronously without interruption** — maximum performance on a dedicated thread.
