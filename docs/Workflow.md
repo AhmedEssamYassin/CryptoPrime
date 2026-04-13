@@ -49,7 +49,7 @@ This allows three packages to **share code without symlinks or file duplication*
 | Package | Name | Purpose |
 |---|---|---|
 | `packages/core` | `@cryptoprime/core` | Pure math library, zero dependencies, runs identically in Node.js and the browser |
-| `packages/client` | `client` | Vite-based frontend SPA |
+| `packages/client` | `client` | Vite-based frontend (Single Page Application) SPA |
 | `packages/server` | `server` | Express.js HTTP API |
 
 Both `client` and `server` declare `@cryptoprime/core` as a dependency:
@@ -97,7 +97,7 @@ npm start -w server     →  node server.js  (starts Express at :3000)
 Below is the complete call chain from button click to displayed prime number.
 
 ```
- ┌──────────────────────────────────────────────────────────────────────┐
+ ┌─────────────────────────────────────────────────────────────────────┐
  │                          BROWSER                                    │
  │                                                                     │
  │  User clicks "Generate Primes"                                      │
@@ -312,7 +312,7 @@ isPrime(n)
     │
     └─ (if n > 2⁶⁴) Extra 5 random-base Miller-Rabin rounds
         Each round uses the SAME ctx
-        Satisfies FIPS 186-4 guidelines
+        Satisfies (Federal Information Processing Standards) FIPS 186-4 guidelines
 ```
 
 ### The BPSW Guarantee
@@ -350,7 +350,7 @@ Once precomputed, `montMult(a, b)` replaces the `%` operator:
 const montMult = (a, b) => {
     const t = a * b;
     const m = (t * Nprime) & Rmask;     // bitwise AND instead of %
-    let u = (t + m * mod) >> k;          // right-shift instead of /
+    let u = (t + m * mod) >> k;         // right-shift instead of /
     if (u >= mod) u -= mod;
     return u;
 };
@@ -362,7 +362,7 @@ Without sharing, every `modPow(_, _, n)` call rebuilds the context from scratch.
 
 - 1× for base-2 Miller-Rabin initial `a^d mod n`
 - `s` times for squarings inside Miller-Rabin (each was a `modPow(p, 2n, N)` before)
-- `~log₂(n+1)` times inside `calcLucas` (for every `modMult`)
+- `~log₂(n + 1)` times inside `calcLucas` (for every `modMult`)
 - 5× for extra MR rounds (large primes)
 
 **Total: 10–20+ redundant rebuilds per candidate.**
@@ -397,11 +397,11 @@ The yield strategy is a **Strategy Pattern** that decouples the math engine from
                                │
               ┌────────────────┼────────────────┐
               │                │                │
-   ┌──────────▼──────┐ ┌──────▼────────┐ ┌─────▼──────────┐
-   │ BrowserYield    │ │ ServerYield   │ │ WorkerYield    │
-   │ every 1000 iters│ │ every 5000    │ │ never yields   │
-   │ setTimeout(0)   │ │ setImmediate  │ │ (no-op)        │
-   └─────────────────┘ └───────────────┘ └────────────────┘
+   ┌──────────▼──────┐ ┌───────▼────────┐ ┌─────▼──────────┐
+   │ BrowserYield    │ │ ServerYield    │ │ WorkerYield    │
+   │ every 1000 iters│ │ every 5000     │ │ never yields   │
+   │ setTimeout(0)   │ │ setImmediate   │ │ (no-op)        │
+   └─────────────────┘ └────────────────┘ └────────────────┘
 ```
 
 `PrimeCore.generatePrimesProgressive()` calls the strategy at two points:
