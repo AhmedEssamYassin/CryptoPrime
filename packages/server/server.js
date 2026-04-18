@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import PrimeGeneratorServer from './prime-generator-server.js';
 
@@ -7,6 +9,13 @@ const app = express();
 // Middleware
 app.use(cors()); // Allows requests from frontend
 app.use(express.json()); // Parses incoming JSON request bodies
+
+// Serve built client
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CLIENT_DIR = path.join(__dirname, process.env.NODE_ENV === 'production' ? '../client/dist' : '../client');
+
+app.use(express.static(CLIENT_DIR));
 
 const PORT = 3000;
 
