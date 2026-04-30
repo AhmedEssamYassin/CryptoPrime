@@ -77,6 +77,22 @@ npm run dev
 
 The Vite dev server proxies `/api/*` requests to the backend, so everything works on a single origin during development.
 
+### Production Mode
+Build the frontend and serve it via the Node.js backend.
+
+```bash
+# 1. Build the client
+npm run build
+# 2. Start the server
+# On Windows (PowerShell)
+$env:NODE_ENV="production"; node packages/server/server.js
+
+# On Linux/macOS
+NODE_ENV=production node packages/server/server.js
+```
+
+- Application: http://localhost:3000
+
 ### Other Commands
 
 ```bash

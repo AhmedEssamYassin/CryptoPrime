@@ -58,5 +58,6 @@ app.post('/api/primes', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Prime generation server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
+    console.log(`Prime generation server running on http://localhost:${PORT}`);
 });
