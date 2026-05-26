@@ -16,9 +16,7 @@ class PrimeCore {
         return min + rnd;
     }
 
-    generateRandomOddNumber(digitLength) {
-        const min = 10n ** BigInt(digitLength - 1);
-        const max = 10n ** BigInt(digitLength) - 1n;
+    generateRandomOddNumber(min, max) {
         let candidate = this.randomBigIntInRange(min, max);
         if (!(candidate & 1n)) candidate += 1n;
         return candidate;
@@ -354,12 +352,15 @@ class PrimeCore {
         const maxAttempts = digitLength > 100 ? 500000 : 10000;
         let foundCount = 0;
 
+        const min = 10n ** BigInt(digitLength - 1);
+        const max = 10n ** BigInt(digitLength) - 1n;
+
         while (foundCount < count) {
             let attempts = 0;
             let candidate;
 
             do {
-                candidate = this.generateRandomOddNumber(digitLength);
+                candidate = this.generateRandomOddNumber(min, max);
                 attempts++;
 
                 if (attempts > maxAttempts) {

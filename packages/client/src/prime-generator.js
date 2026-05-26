@@ -53,10 +53,12 @@ export class PrimeGenerator {
         this.workerBusy = true;
 
         return new Promise((resolve, reject) => {
+            let primesFound = 0;
             const messageHandler = (e) => {
                 const { type, prime, error } = e.data;
 
                 if (type === 'prime') {
+                    primesFound++;
                     if (onPrimeFound) {
                         onPrimeFound(BigInt(prime));
                     }
@@ -67,7 +69,9 @@ export class PrimeGenerator {
                 } else if (type === 'error') {
                     this.worker.removeEventListener('message', messageHandler);
                     this.workerBusy = false;
-                    reject(new Error(error));
+                    const err = new Error(error);
+                    err.primesFound = primesFound;
+                    reject(err);
                 }
             };
 

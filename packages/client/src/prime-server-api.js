@@ -20,6 +20,7 @@ export class PrimeServerAPI {
         this.abort();
         this._abortController = new AbortController();
         const { signal } = this._abortController;
+        let primesFound = 0;
 
         try {
             const response = await fetch(this.serverUrl, {
@@ -51,8 +52,9 @@ export class PrimeServerAPI {
                     if (!line.trim()) continue;
                     try {
                         const data = JSON.parse(line);
-                        if (data.type === 'prime' && onPrimeFound) {
-                            onPrimeFound(BigInt(data.prime));
+                        if (data.type === 'prime') {
+                            primesFound++;
+                            if (onPrimeFound) onPrimeFound(BigInt(data.prime));
                         } else if (data.type === 'error') {
                             throw new Error(data.error);
                         }
@@ -72,6 +74,7 @@ export class PrimeServerAPI {
                 return;
             }
             console.error('Server generation failed:', error);
+            error.primesFound = primesFound;
             throw error;
         } finally {
             this._abortController = null;

@@ -59,8 +59,10 @@ export class PrimeClient {
             await this.serverAPI.generatePrimesProgressive(digitLength, count, onPrimeFound);
         } catch (error) {
             console.warn('Server generation failed, falling back to worker:', error);
-            // Fallback to worker
-            await this.generateViaWorker(digitLength, count, onPrimeFound);
+            const remainingCount = count - (error.primesFound || 0);
+            if (remainingCount > 0) {
+                await this.generateViaWorker(digitLength, remainingCount, onPrimeFound);
+            }
         }
     }
 
@@ -69,8 +71,10 @@ export class PrimeClient {
             await this.workerGenerator.generatePrimesProgressive(digitLength, count, onPrimeFound);
         } catch (error) {
             console.warn('Worker generation failed, falling back to main thread:', error);
-            // Fallback to main thread
-            await this.generateViaMainThread(digitLength, count, onPrimeFound);
+            const remainingCount = count - (error.primesFound || 0);
+            if (remainingCount > 0) {
+                await this.generateViaMainThread(digitLength, remainingCount, onPrimeFound);
+            }
         }
     }
 
